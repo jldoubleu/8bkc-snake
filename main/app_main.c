@@ -6,6 +6,9 @@
 #include "powerbtn_menu.h" // Power Button menu stuff powerbtn_menu_show, constants, etc
 #include "ugui.h"
 
+#define TITLE "Snake"
+#define START_MSG "Press Start"
+
 static void do_powerbtn_menu() {
   int i = powerbtn_menu_show(kcugui_get_fb());
   if (i == POWERBTN_MENU_EXIT) {
@@ -26,26 +29,46 @@ int get_keydown() {
   return ret;
 }
 
+uint16_t centered_text_offset(char* text, uint8_t font_width) {
+  size_t text_length = strlen(text) + 1; 
+  return (KC_SCREEN_W / 2) - ((text_length / 2) * font_width);
+}
+
 void draw_title_screen() {
-  char* title = "Snake\n";
-  size_t title_length = strlen(title); 
   uint8_t font_width = 6;
-  uint16_t offset = (KC_SCREEN_W - (title_length * font_width)) / 2;
   
   kcugui_cls();
   UG_FontSelect(&FONT_6X8);
   UG_SetForecolor(C_LAWN_GREEN);
-  UG_PutString(offset, 0, title);
+  UG_PutString(0, 0, TITLE);
+  UG_PutString(centered_text_offset(TITLE, font_width), 0, TITLE);
+  // Start message is a little too long, cut out the spaces
+  UG_FontSetHSpace(0);
+  UG_SetForecolor(C_TOMATO);
+  UG_PutString(centered_text_offset(START_MSG, font_width), KC_SCREEN_H / 2, START_MSG);
+  kcugui_flush();
 }
 
-void app_main() {
-  kchal_init();  // Initialize the PocketSprite SDK.
-  kcugui_init(); // Initialize ugui
+void do_title_screen() {
   draw_title_screen();
   while (1) {
     int btn = get_keydown();
     if (btn & KC_BTN_POWER) {
       do_powerbtn_menu();
     }
+    if(btn & KC_BTN_START) {
+      // start the game on start;
+      break;
+    }
+  }
+}
+
+void app_main() {
+  kchal_init();  // Initialize the PocketSprite SDK.
+  kcugui_init(); // Initialize ugui
+
+  while (1) {
+    do_title_screen();
+    kchal_exit_to_chooser();
   }
 }
